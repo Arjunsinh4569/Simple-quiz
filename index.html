@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quick Personality Quiz</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #eef2ff, #f8fafc);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    color: #172033;
+  }
+  .card {
+    width: 100%;
+    max-width: 560px;
+    background: white;
+    border-radius: 22px;
+    padding: 32px;
+    box-shadow: 0 15px 45px rgba(0,0,0,.12);
+  }
+  .hidden { display: none; }
+  h1 { margin-top: 0; font-size: 30px; }
+  h2 { font-size: 24px; line-height: 1.35; }
+  p { color: #5b6475; line-height: 1.6; }
+  .progress {
+    height: 8px;
+    background: #e8ecf3;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 25px;
+  }
+  .progress-bar {
+    height: 100%;
+    width: 0%;
+    background: #4f46e5;
+    transition: width .3s ease;
+  }
+  .option {
+    display: block;
+    border: 2px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 15px;
+    margin: 12px 0;
+    cursor: pointer;
+    transition: .2s;
+  }
+  .option:hover { border-color: #6366f1; background: #f7f7ff; }
+  .option input { margin-right: 10px; }
+  button {
+    width: 100%;
+    border: 0;
+    border-radius: 13px;
+    padding: 15px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    background: #4f46e5;
+    color: white;
+    margin-top: 12px;
+  }
+  button:hover { background: #4338ca; }
+  .secondary {
+    background: #eef2ff;
+    color: #3730a3;
+  }
+  .result {
+    text-align: center;
+    padding: 10px 0;
+  }
+  .result-icon { font-size: 60px; }
+  .small { font-size: 13px; color: #7b8494; }
+</style>
+</head>
+
+<body>
+<div class="card">
+
+  <!-- START SCREEN -->
+  <section id="startScreen">
+    <div style="font-size:50px;">🎯</div>
+    <h1>Quick Personality Quiz</h1>
+    <p>Answer a few simple questions and discover your quiz result.</p>
+    <button onclick="startQuiz()">Start Quiz</button>
+  </section>
+
+  <!-- QUIZ SCREEN -->
+  <section id="quizScreen" class="hidden">
+    <div class="progress">
+      <div id="progressBar" class="progress-bar"></div>
+    </div>
+
+    <p id="questionNumber" class="small"></p>
+    <h2 id="questionText"></h2>
+    <div id="options"></div>
+
+    <button onclick="nextQuestion()">Next</button>
+  </section>
+
+  <!-- RESULT SCREEN -->
+  <section id="resultScreen" class="hidden result">
+    <div class="result-icon" id="resultIcon">🎉</div>
+    <h1 id="resultTitle"></h1>
+    <p id="resultText"></p>
+
+    <button onclick="restartQuiz()">Start Again</button>
+  </section>
+
+</div>
+
+<script>
+/*
+  SAMPLE INTERACTIVE QUIZ
+
+  Branching example:
+  Question 1:
+    A -> outgoing/friendly path
+    B -> calm path
+    C -> adventurous path
+
+  Question 2 changes according to Question 1.
+*/
+
+const questions = [
+  {
+    id: "q1",
+    text: "What would you prefer to do on a weekend?",
+    options: [
+      { text: "Go out with friends", value: "social" },
+      { text: "Relax at home", value: "calm" },
+      { text: "Try something new", value: "adventure" }
+    ]
+  },
+
+  {
+    id: "q2",
+    branch: true
+  },
+
+  {
+    id: "q3",
+    text: "Which word describes you best?",
+    options: [
+      { text: "Positive", value: "positive" },
+      { text: "Thoughtful", value: "thoughtful" },
+      { text: "Curious", value: "curious" }
+    ]
+  }
+];
+
+let currentQuestion = 0;
+let answers = {};
+let visibleQuestions = [];
+
+function startQuiz() {
+  answers = {};
+  currentQuestion = 0;
+
+  document.getElementById("startScreen").classList.add("hidden");
+  document.getElementById("resultScreen").classList.add("hidden");
+  document.getElementById("quizScreen").classList.remove("hidden");
+
+  buildQuestionPath();
+  showQuestion();
+}
+
+function buildQuestionPath() {
+  const q1 = answers.q1;
+  const q2 = getBranchQuestion(q1);
+
+  visibleQuestions = [
+    questions[0],
+    q2,
+    questions[2]
+  ];
+}
+
+function getBranchQuestion(choice) {
+  if (choice === "social") {
+    return {
+      id: "q2",
+      text: "When you are with friends, what do you enjoy most?",
+      options: [
+        { text: "Talking and meeting new people", value: "social" },
+        { text: "Making everyone laugh", value: "positive" },
+        { text: "Planning activities together", value: "curious" }
+      ]
+    };
+  }
+
+  if (choice === "calm") {
+    return {
+      id: "q2",
+      text: "When relaxing at home, what sounds best?",
+      options: [
+        { text: "Watching a movie", value: "calm" },
+        { text: "Reading or learning", value: "thoughtful" },
+        { text: "Listening to music", value: "positive" }
+      ]
+    };
+  }
+
+  return {
+    id: "q2",
+    text: "If you could try something new, what would you choose?",
+    options: [
+      { text: "A new hobby", value: "curious" },
+      { text: "A new place", value: "adventure" },
+      { text: "A new challenge", value: "positive" }
+    ]
+  };
+}
+
+function showQuestion() {
+  const question = visibleQuestions[currentQuestion];
+
+  document.getElementById("questionNumber").textContent =
+    "Question " + (currentQuestion + 1) + " of " + visibleQuestions.length;
+
+  document.getElementById("questionText").textContent = question.text;
+
+  const optionsContainer = document.getElementById("options");
+  optionsContainer.innerHTML = "";
+
+  question.options.forEach((option, index) => {
+    const label = document.createElement("label");
+    label.className = "option";
+
+    label.innerHTML = `
+      <input type="radio" name="answer" value="${option.value}">
+      ${option.text}
+    `;
+
+    optionsContainer.appendChild(label);
+  });
+
+  const progress =
+    ((currentQuestion) / visibleQuestions.length) * 100;
+
+  document.getElementById("progressBar").style.width = progress + "%";
+}
+
+function nextQuestion() {
+  const selected = document.querySelector('input[name="answer"]:checked');
+
+  if (!selected) {
+    alert("Please select an answer first.");
+    return;
+  }
+
+  const question = visibleQuestions[currentQuestion];
+  answers[question.id] = selected.value;
+
+  if (currentQuestion === 0) {
+    buildQuestionPath();
+  }
+
+  currentQuestion++;
+
+  if (currentQuestion >= visibleQuestions.length) {
+    showResult();
+  } else {
+    showQuestion();
+  }
+}
+
+function showResult() {
+  document.getElementById("quizScreen").classList.add("hidden");
+  document.getElementById("resultScreen").classList.remove("hidden");
+  document.getElementById("progressBar").style.width = "100%";
+
+  const values = Object.values(answers);
+
+  let result;
+
+  if (values.includes("adventure") || values.includes("curious")) {
+    result = {
+      icon: "🚀",
+      title: "You are Curious & Adventurous!",
+      text: "You enjoy exploring new ideas, experiences and possibilities."
+    };
+  } else if (values.includes("social") || values.includes("positive")) {
+    result = {
+      icon: "🌟",
+      title: "You are Social & Positive!",
+      text: "You enjoy connecting with people and bringing positive energy."
+    };
+  } else {
+    result = {
+      icon: "🌿",
+      title: "You are Calm & Thoughtful!",
+      text: "You appreciate peaceful moments and thoughtful choices."
+    };
+  }
+
+  document.getElementById("resultIcon").textContent = result.icon;
+  document.getElementById("resultTitle").textContent = result.title;
+  document.getElementById("resultText").textContent = result.text;
+}
+
+function restartQuiz() {
+  document.getElementById("resultScreen").classList.add("hidden");
+  document.getElementById("startScreen").classList.remove("hidden");
+}
+</script>
+
+</body>
+</html>
